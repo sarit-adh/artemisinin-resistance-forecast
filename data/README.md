@@ -1,126 +1,65 @@
-# Pf8
+# Data
 
-MalariaGEN **Pf8** release: 33,325 samples worldwide (collection years
-1966–2022) — larger and more recent than Pf7, and the release that covers the
-East-African artemisinin emergences. Shared conventions (genotype notation
-`gene_codon[REF]`, mixed-call/`-`/`*` rules, copy-number codes, gene list) are
-in [`../README.md`](../README.md).
+Per-sample genomic drug-resistance data for the malaria parasite *Plasmodium
+falciparum* (MalariaGEN **Pf7** and **Pf8** releases). This is the genetic
+**outcome layer** for the artemisinin-resistance forecasting project: which
+resistance mutations each sequenced parasite carries, and where/when it was
+collected. Predictor layers (drug pressure, transmission, connectivity) are
+not in this repository.
 
-## Files
+**Source:** MalariaGEN — https://www.malariagen.net/resource/34/
+Cite the MalariaGEN Pf7 and Pf8 data releases and honour the MalariaGEN terms
+of use.
 
-| File | Rows | Keyed on | What it adds |
-|---|---:|---|---|
-| `Pf8_samples.txt` | 33,325 | `Sample` | sample metadata |
-| `Pf8_drug_resistance_marker_genotypes.tsv` | 24,409 | `Sample` | point-mutation genotypes |
-| `Pf8_inferred_resistance_status_classification.tsv` | 24,409 | `sample` | per-drug resistance verdicts |
-| `Pf8_fws.tsv` | 24,409 | `Sample` | within-sample diversity |
-| `Pf8_cnv_calls.tsv` | 24,409 | `Sample` | gene amplification/deletion (CNV) calls |
-| `Pf8_tandem_duplication_breakpoints.tsv` | 65 | — | reference catalogue of known amplification breakpoints |
-| `Pf8_resistance_classification-1.pdf` | — | — | documents the classification rules |
+## Layout
 
-`samples` lists all 33,325; the four per-sample data files cover only the
-**24,409 that passed QC** (`QC pass == True`). Join them on `Sample` (note the
-classification file's key is lowercase `sample`).
+| Folder | Release | Samples (total / QC-pass) | Years | Files | Field docs |
+|---|---|---|---|---:|---|
+| [`pf7/`](pf7/) | Pf7 (2023) | 20,864 / 16,203 | 1984–2018 | 5 | [`pf7/README.md`](pf7/README.md) |
+| [`pf8/`](pf8/) | Pf8 (newer) | 33,325 / 24,409 | 1966–2022 | 7 | [`pf8/README.md`](pf8/README.md) |
 
-## `Pf8_samples.txt` — sample metadata
+**Pf8 supersedes Pf7**: every Pf7 sample (all 20,864) is included in Pf8, which
+adds 12,461 new ones. Prefer Pf8 for current work; Pf7 is kept for
+reproducibility and because its `samples` file carries the `Sample was in Pf6`
+link.
 
-Same schema as Pf7 except the last column. Finest location is admin-1.
+Each row in every per-sample file = **one sequenced parasite isolate**, keyed
+on `Sample`. `.txt`/`.tsv` files are all **tab-separated**. (One exception:
+`pf8/Pf8_tandem_duplication_breakpoints.tsv` is a reference catalogue, one row
+per known breakpoint, not per sample.)
 
-| Field | Meaning |
-|---|---|
-| `Sample` | Unique sample ID (primary key). |
-| `Study` | Source study code (99 studies). |
-| `Country` | Collection country (34). |
-| `Admin level 1` | Province/region of collection. |
-| `Country latitude` / `Country longitude` | Country centroid. |
-| `Admin level 1 latitude` / `Admin level 1 longitude` | Admin-1 centroid. |
-| `Year` | Collection year (1966–2022). |
-| `ENA` | European Nucleotide Archive accession for raw reads. |
-| `All samples same case` | ID grouping samples from one clinical case. |
-| `Population` | Region code: `AF-W/C/E/NE` Africa; `AS-S-*`/`AS-SE-*` Asia; `OC-NG` Oceania; `SA` S. America. |
-| `% callable` | Fraction of genome confidently genotyped. |
-| `QC pass` | `True`/`False`; only `True` rows have genotype/classification/fws/CNV. |
-| `Exclusion reason` | `Analysis_set` if retained; QC reason otherwise. |
-| `Sample type` | Library prep (`gDNA`, `sWGA`, `MDA`). |
-| `Sample was in Pf7` | Whether the sample also appeared in Pf7 (20,864 are shared). |
+## Conventions shared by all files (read once)
 
-## `Pf8_drug_resistance_marker_genotypes.tsv` — point-mutation genotypes
+**Genotype column names** — `gene_codon[REF]`, e.g. `crt_76[K]`: gene *crt*,
+codon **76**, bracket = **reference (wild-type) amino acid**. Cell value =
+observed amino acid:
 
-Column-name and value notation: see parent README.
+- single letter = allele called (differs from `[REF]` → mutant; equals it → wild-type);
+- comma-separated (`T,K`) = **mixed call**, multiple co-infecting strains carried different alleles (not an error);
+- `-` = uncallable/missing; trailing `*` = non-standard call.
 
-| Field | Meaning |
-|---|---|
-| `crt_72[C]` `crt_74[M]` `crt_75[N]` `crt_76[K]` | CRT codons 72–76 (chloroquine; 76 is the key K76T call). |
-| `crt_72-76[CVMNK]` | CRT 72–76 haplotype (`CVMNK` wild-type, `CVIET` resistant). |
-| `crt_93[T]` `crt_97[H]` `crt_218[I]` `crt_220[A]` `crt_271[Q]` `crt_326[N]` `crt_333[T]` `crt_353[G]` `crt_356[I]` `crt_371[R]` | Additional CRT codons (incl. piperaquine-associated changes). |
-| `dhfr_16[N]` `dhfr_51[N]` `dhfr_59[C]` `dhfr_108[S]` `dhfr_164[I]` `dhfr_306[S]` | DHFR codons — pyrimethamine resistance. |
-| `dhps_436[S]` `dhps_437[G]` `dhps_540[K]` `dhps_581[A]` `dhps_613[A]` | DHPS codons — sulfadoxine resistance. |
-| `exo_415[E]` | Exonuclease E415G — piperaquine resistance background. |
-| `mdr1_86[N]` `mdr1_184[Y]` `mdr1_1034[S]` `mdr1_1042[N]` `mdr1_1226[F]` `mdr1_1246[D]` | *Pfmdr1* codons — multidrug/mefloquine, modulates ACT partner-drug response. |
-| `arps10_127-128[VD]` | *arps10* V127M/D128 — resistance genetic background. |
-| `fd_193[D]` | Ferredoxin D193Y — resistance background. |
-| `mdr2_484[T]` | *Pfmdr2* T484I — resistance background. |
-| `kelch13_349-726_ns_changes` | **Artemisinin marker:** non-synonymous changes in the *Pfkelch13* propeller (349–726). Blank = none; else mutation(s) e.g. `C580Y`, `R561H`. |
-| `mdr1_dup_call` | *Pfmdr1* copy number (`1`/`0`/`-1`) — mefloquine. |
-| `pm2_dup_call` | Plasmepsin-2 copy number (`1`/`0`/`-1`) — piperaquine. |
+**Copy-number / deletion calls** (`*_dup_call`, `*_final_amplification_call`,
+`*_final_deletion_call`): `1` = amplified/deleted, `0` = normal single copy /
+no deletion, `-1` = uncallable.
 
-## `Pf8_inferred_resistance_status_classification.tsv` — per-drug verdicts
+**Genes:** `crt` chloroquine; `dhfr` pyrimethamine; `dhps` sulfadoxine; `mdr1`
+multidrug/mefloquine; `pm2`(`pm2_pm3`) plasmepsin-2/3 (piperaquine); `gch1`
+GTP-cyclohydrolase-1 (antifolate background); `hrp2`/`hrp3` rapid-test antigens;
+**`kelch13` artemisinin** — the forecasting target; `exo`, `arps10`, `fd`,
+`mdr2` resistance-background markers.
 
-Rule-based calls derived from genotype (rules in
-`Pf8_resistance_classification-1.pdf`). All drug fields take
-`Sensitive`/`Resistant`/`Undetermined`. (Unlike Pf7, there are no *hrp*
-columns here — HRP2/HRP3 deletions are in the CNV file.)
+## Caveats (read before modelling)
 
-| Field | Meaning |
-|---|---|
-| `sample` | Sample ID (lowercase key). |
-| `Chloroquine` `Pyrimethamine` `Sulfadoxine` `Mefloquine` `Artemisinin` `Piperaquine` | Single-drug resistance status. |
-| `SP (uncomplicated)` / `SP (IPTp)` | Sulfadoxine–pyrimethamine: treatment vs. preventive-use context. |
-| `AS-MQ` | Artesunate–mefloquine (combination). |
-| `DHA-PPQ` | Dihydroartemisinin–piperaquine (combination). |
+- **Pf7 ends in 2018**; the confirmed East-African artemisinin emergences were
+  reported ~2019–2021. **Pf8 extends to 2022** and is the release that covers
+  them.
+- **Sampling is non-random and West-Africa-skewed**; East-African hotspots are
+  sparse. Observed frequencies are biased by where sequencing was done.
+- **Validated markers (R561H, C469Y, A675V, P441L)** are concentrated in
+  Southeast-Asian samples in Pf7; `C580Y` (Mekong) dominates. Check Pf8 for the
+  more recent African signal.
+- **Location is admin-1 resolution** (centroids), not precise coordinates.
+- **Resistance status is rule-derived from genotype**, not clinical phenotype.
 
-## `Pf8_fws.tsv` — within-sample diversity
-
-| Field | Meaning |
-|---|---|
-| `Sample` | Sample ID. |
-| `Fws` | Within-sample diversity, ~0–1. Near 1 = single clone; lower = multiple co-infecting strains (high multiplicity of infection). |
-
-## `Pf8_cnv_calls.tsv` — copy-number (amplification / deletion) calls
-
-Detailed CNV evidence for four amplified genes (**CRT, GCH1, MDR1, PM2_PM3**)
-and two deletable antigens (**HRP2, HRP3**). Each gene has several evidence
-columns plus one `final_*_call` summary; the final call is normally the field
-to use (`1` = amplified/deleted, `0` = normal, `-1` = uncallable).
-
-| Field pattern | Meaning |
-|---|---|
-| `Sample` | Sample ID. |
-| `<GENE>_uncurated_coverage_only` | Raw copy-number call from read-depth alone. |
-| `<GENE>_curated_coverage_only` | Coverage call after manual curation. |
-| `<GENE>_faceaway_only` | Call from "face-away" read-pair orientation evidence (duplication signature). |
-| `<GENE>_breakpoint` | Named breakpoint detected (see breakpoints catalogue); `-` if none. |
-| `<GENE>_final_amplification_call` | **Final amplification verdict** for CRT/GCH1/MDR1/PM2_PM3 (`1`/`0`/`-1`). |
-| `HRP2_deletion_type` / `HRP3_deletion_type` | Nature of the deletion when present (e.g. `Telomere healing`); `-` if none. |
-| `HRP2_final_deletion_call` / `HRP3_final_deletion_call` | **Final deletion verdict** for the rapid-test antigen genes (`1` = deleted, `0` = present, `-1` = uncallable). |
-
-Gene set: **CRT** (chloroquine/piperaquine), **GCH1** (antifolate background),
-**MDR1** (mefloquine/ACT partner), **PM2_PM3** (plasmepsin-2/3, piperaquine),
-**HRP2/HRP3** (deletion → false-negative rapid diagnostic tests).
-
-## `Pf8_tandem_duplication_breakpoints.tsv` — breakpoint reference catalogue
-
-Not per-sample: one row per **known amplification breakpoint** (65 total),
-referenced by name from the CNV file's `<GENE>_breakpoint` columns.
-
-| Field | Meaning |
-|---|---|
-| `chrom` | Chromosome, 3D7 reference (e.g. `Pf3D7_05_v3`). |
-| `first_breakpoint_start` / `first_breakpoint_end` | Coordinate window of the first (proximal) breakpoint. |
-| `second_breakpoint_start` / `second_breakpoint_end` | Coordinate window of the second (distal) breakpoint. |
-| `start_gene_id` / `end_gene_id` | Genes flanking the duplicated segment (PlasmoDB IDs). |
-| `breakpoint_name` | Human-readable name (e.g. `42kb around MDR1`). |
-| `breakpoint_id` | Stable ID referenced by the CNV file (e.g. `PfMDR1_dup_1`). |
-| `target_gene` | Resistance gene amplified: `MDR1`, `GCH1`, `CRT`, or `plasmepsin`. |
-| `use` | `1` = used in calling, `0` = not used. |
-| `note` | Free-text annotation (often empty). |
+When aggregating to place-year frequencies, keep the numerator and denominator
+(`n_mutant`, `n_tested`) separately — never collapse to a percentage.
